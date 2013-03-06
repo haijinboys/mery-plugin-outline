@@ -14,12 +14,12 @@ uses
 {$IF CompilerVersion > 22.9}
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
-  Vcl.Menus, Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls, Winapi.CommCtrl,
+  Vcl.Menus, Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls,
 {$ELSE}
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, StdCtrls, ComCtrls, ExtCtrls, CommCtrl,
+  Dialogs, Menus, StdCtrls, ComCtrls, ExtCtrls,
 {$IFEND}
-  Native, StringBuffer;
+  StringBuffer;
 
 const
   MaxLineLength = 2000;
@@ -169,7 +169,7 @@ type
     FAbortThread: Boolean;
     FQueEvent: THandle;
     FMutex: THandle;
-    FPoint: TNativePoint;
+    FPoint: TPoint;
     procedure ReadIni(Prop: TProp; const Mode: string); overload;
     procedure WriteIni(Prop: TProp); overload;
     procedure EraseSection;
