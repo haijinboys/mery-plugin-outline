@@ -20,7 +20,7 @@ uses
 
 resourcestring
   SName = 'アウトライン';
-  SVersion = '2.0.8';
+  SVersion = '2.0.9';
 
 type
   TOutlineFrame = class(TFrame)
@@ -267,10 +267,7 @@ begin
     if Info.nID = FClientID then
     begin
       if FForm <> nil then
-      begin
         FForm.ResetThread;
-        FreeAndNil(FForm);
-      end;
     end;
   end;
   if (nEvent and EVENT_CUSTOM_BAR_CLOSED) <> 0 then

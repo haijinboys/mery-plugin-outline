@@ -231,48 +231,29 @@ var
 begin
   Quit := False;
   ExitCode := 0;
-  WaitResult := 0;
   repeat
     while PeekMessage(Msg, 0, 0, 0, PM_REMOVE) do
     begin
-      if Msg.message = WM_QUIT then
-      begin
-        Quit := True;
-        ExitCode := NativeInt(Msg.wParam);
-        Break;
-      end
+      case Msg.message of
+        WM_QUIT:
+          begin
+            Quit := True;
+            ExitCode := NativeInt(Msg.wParam);
+            Break;
+          end;
+        WM_MOUSEMOVE:
+          ;
+        WM_LBUTTONDOWN:
+          ;
       else
         DispatchMessage(Msg);
-      WaitResult := MsgWaitForMultipleObjects(Count, Handles, False, Milliseconds, QS_ALLINPUT);
+      end;
     end;
-  until WaitResult = WAIT_OBJECT_0;
+    WaitResult := MsgWaitForMultipleObjects(Count, Handles, False, Milliseconds, QS_ALLINPUT);
+  until WaitResult <> WAIT_OBJECT_0 + 1;
   if Quit then
     PostQuitMessage(ExitCode);
   Result := NativeInt(WaitResult - WAIT_OBJECT_0);
-end;
-
-function TrimLine(Line: PChar): string;
-var
-  P: PChar;
-  Len: NativeInt;
-begin
-  P := Line;
-  while (P^ = ' ') or (P^ = #09) do
-    Inc(P);
-  if P <> Line then
-  begin
-    Len := StrLen(P);
-    StrMove(Line, P, Len + 1);
-  end;
-  P := Line;
-  while True do
-  begin
-    P := StrScan(P, #09);
-    if P = nil then
-      Break;
-    P^ := ' ';
-    Inc(P);
-  end;
 end;
 
 { TProp }
@@ -481,9 +462,7 @@ begin
   FNode := nil;
   FLineNum := ALineNum;
   FLevel := ALevel;
-  FLineStr := ALineStr;
-  if Length(FLineStr) > 0 then
-    TrimLine(@FLineStr[1]);
+  FLineStr := Trim(ALineStr);
 end;
 
 { TOutlineList }
