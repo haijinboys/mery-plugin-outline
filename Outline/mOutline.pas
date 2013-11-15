@@ -20,7 +20,7 @@ uses
 
 resourcestring
   SName = 'アウトライン';
-  SVersion = '2.0.10';
+  SVersion = '2.0.12';
 
 type
   TOutlineFrame = class(TFrame)
@@ -107,7 +107,7 @@ begin
           end;
         end;
       end;
-      if ((Msg.wParam >= VK_PRIOR) and (Msg.wParam <= VK_DELETE)) or (Msg.wParam <= VK_TAB) or (Msg.wParam <= VK_BACK) or (Msg.wParam <= VK_ESCAPE) or (Msg.wParam <= VK_RETURN) then
+      if ((Msg.wParam >= VK_PRIOR) and (Msg.wParam <= VK_DELETE)) or (Msg.wParam = VK_TAB) or (Msg.wParam = VK_BACK) or (Msg.wParam = VK_ESCAPE) or (Msg.wParam = VK_RETURN) then
       begin
         SendMessage(GetFocus, Msg.message, Msg.wParam, Msg.lParam);
         Result := True;
@@ -302,12 +302,14 @@ begin
   end;
   if (nEvent and EVENT_CARET_MOVED) <> 0 then
   begin
-    Editor_GetCaretPos(hwnd, POS_LOGICAL, @APos);
-    if APos.Y <> FPos then
+    if FForm <> nil then
     begin
-      FPos := APos.Y;
-      if FForm <> nil then
+      Editor_GetCaretPos(hwnd, POS_LOGICAL, @APos);
+      if APos.Y <> FPos then
+      begin
+        FPos := APos.Y;
         FForm.UpdateTreeSel := True;
+      end;
     end;
   end;
   if (nEvent and EVENT_IDLE) <> 0 then

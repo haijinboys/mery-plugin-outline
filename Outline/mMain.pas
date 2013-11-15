@@ -1338,6 +1338,11 @@ begin
   ASize := Editor_Info(FEditor, MI_GET_FONT_SIZE, 0);
   AFore := TColor(Editor_Info(FEditor, MI_GET_TEXT_COLOR, COLOR_GENERAL));
   ABack := TColor(Editor_Info(FEditor, MI_GET_BACK_COLOR, COLOR_GENERAL));
+  if Editor_Info(FEditor, MI_GET_INVERT_COLOR, 0) = 1 then
+  begin
+    AFore := GetInvertColor(AFore);
+    ABack := GetInvertColor(ABack);
+  end;
   with TreeView do
   begin
     with Font do
