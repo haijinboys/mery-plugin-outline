@@ -20,7 +20,7 @@ uses
 
 resourcestring
   SName = 'アウトライン';
-  SVersion = '2.0.12';
+  SVersion = '2.0.13';
 
 type
   TOutlineFrame = class(TFrame)

@@ -458,11 +458,26 @@ end;
 { TOutlineItem }
 
 constructor TOutlineItem.Create(ALineNum, ALevel: NativeInt; ALineStr: string);
+  function TrimLine(const ALine: string): string;
+  var
+    I, Len: NativeInt;
+  begin
+    Result := Trim(ALine);
+    Len := Length(Result);
+    I := 1;
+    while I <= Len do
+    begin
+      if Result[I] = #09 then
+        Result[I] := ' ';
+      Inc(I);
+    end;
+  end;
+
 begin
   FNode := nil;
   FLineNum := ALineNum;
   FLevel := ALevel;
-  FLineStr := Trim(ALineStr);
+  FLineStr := TrimLine(ALineStr);
 end;
 
 { TOutlineList }
