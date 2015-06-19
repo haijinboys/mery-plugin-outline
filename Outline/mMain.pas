@@ -19,7 +19,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, Menus, StdCtrls, ComCtrls, ExtCtrls,
 {$IFEND}
-  StringBuffer;
+  mPerMonitorDpi, StringBuffer;
 
 const
   MaxLineLength = 2000;
@@ -129,7 +129,7 @@ type
     property Items[Index: Integer]: TOutlineItem read Get; default;
   end;
 
-  TMainForm = class(TForm)
+  TMainForm = class(TScaledForm)
     PopupMenu: TPopupMenu;
     GoMenuItem: TMenuItem;
     SelectMenuItem: TMenuItem;
@@ -157,8 +157,8 @@ type
     { Private éŒ¾ }
     FEditor: THandle;
     FBarPos: NativeInt;
-    FFontNameSub: string;
-    FFontSizeSub: NativeInt;
+    FFontName: string;
+    FFontSize: NativeInt;
     FProp: TProp;
     FStringBuffer: TStringBuffer;
     FList: TOutlineList;
@@ -189,7 +189,8 @@ type
     procedure ResetThread;
     procedure OutlineAll;
     procedure UpdateTreeViewSel;
-    procedure SetTreeColor;
+    procedure SetFont;
+    procedure SetScale(const Value: NativeInt);
     function SetProperties: Boolean;
     property BarPos: NativeInt read FBarPos write FBarPos;
     property UpdateOutline: Boolean read FUpdateOutline write FUpdateOutline;
@@ -204,8 +205,7 @@ type
 
 var
   MainForm: TMainForm;
-  FFontName: string;
-  FFontSize: NativeInt;
+  FFont: TFont;
   FPropItems: TPropItems;
 
 implementation
@@ -513,8 +513,9 @@ begin
       Size := 8;
     end;
   FEditor := ParentWindow;
-  FFontNameSub := '';
-  FFontSizeSub := 0;
+  FFont.Assign(Font);
+  FFontName := '';
+  FFontSize := 0;
   FProp := TProp.Create;
   FStringBuffer := TStringBuffer.Create(0);
   FList := TOutlineList.Create;
@@ -528,9 +529,9 @@ begin
   ReadIni;
   with Font do
   begin
-    ChangeScale(FFontSize, Size);
-    Name := FFontName;
-    Size := FFontSize;
+    ChangeScale(FFont.Size, Size);
+    Name := FFont.Name;
+    Size := FFont.Size;
   end;
 end;
 
@@ -1037,10 +1038,20 @@ begin
     Exit;
   with TMemIniFile.Create(S, TEncoding.UTF8) do
     try
-      FFontName := ReadString('MainForm', 'FontName', Font.Name);
-      FFontSize := ReadInteger('MainForm', 'FontSize', Font.Size);
-      FFontNameSub := ReadString('Outline', 'FontName', FFontNameSub);
-      FFontSizeSub := ReadInteger('Outline', 'FontSize', FFontSizeSub);
+      with FFont do
+        if ValueExists('MainForm', 'FontName') then
+        begin
+          Name := ReadString('MainForm', 'FontName', Name);
+          Size := ReadInteger('MainForm', 'FontSize', Size);
+          Height := MulDiv(Height, 96, Screen.PixelsPerInch);
+        end
+        else if (Win32MajorVersion > 6) or ((Win32MajorVersion = 6) and (Win32MinorVersion >= 2)) then
+        begin
+          Assign(Screen.IconFont);
+          Height := MulDiv(Height, 96, Screen.PixelsPerInch);
+        end;
+      FFontName := ReadString('Outline', 'FontName', FFontName);
+      FFontSize := ReadInteger('Outline', 'FontSize', FFontSize);
     finally
       Free;
     end;
@@ -1343,7 +1354,7 @@ begin
     FList[I].Node.Selected := True;
 end;
 
-procedure TMainForm.SetTreeColor;
+procedure TMainForm.SetFont;
 var
   AName: array [0 .. 255] of Char;
   ASize: NativeInt;
@@ -1362,12 +1373,24 @@ begin
   begin
     with Font do
     begin
-      Name := IfThen(FFontNameSub <> '', FFontNameSub, AName);
-      Size := IfThen(FFontSizeSub <> 0, FFontSizeSub, ASize);
+      Name := IfThen(FFontName <> '', FFontName, AName);
+      Size := IfThen(FFontSize <> 0, FFontSize, ASize);
+      Height := MulDiv(Height, Self.PixelsPerInch, 96);
       Color := AFore;
     end;
     Color := ABack;
   end;
+end;
+
+procedure TMainForm.SetScale(const Value: NativeInt);
+var
+  P: NativeInt;
+begin
+  P := PixelsPerInch;
+  PixelsPerInch := Value;
+  with Font do
+    Height := MulDiv(Height, Self.PixelsPerInch, P);
+  SetFont;
 end;
 
 procedure TMainForm.UpdateTreeViewString;
@@ -1422,5 +1445,14 @@ begin
     FreeAndNil(Items);
   end;
 end;
+
+initialization
+
+FFont := TFont.Create;
+
+finalization
+
+if Assigned(FFont) then
+  FreeAndNil(FFont);
 
 end.

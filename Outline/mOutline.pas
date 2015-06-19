@@ -20,7 +20,7 @@ uses
 
 resourcestring
   SName = 'アウトライン';
-  SVersion = '2.0.13';
+  SVersion = '2.1.0';
 
 type
   TOutlineFrame = class(TFrame)
@@ -148,7 +148,7 @@ begin
       begin
         ResetThread;
         ReadIni;
-        SetTreeColor;
+        SetFont;
         UpdateOutline := True;
       end;
   end;
@@ -261,7 +261,7 @@ begin
         ResetThread;
         ReadIni;
         UpdateOutline := True;
-        SetTreeColor;
+        SetFont;
       end;
   end;
   if (nEvent and EVENT_CUSTOM_BAR_CLOSING) <> 0 then
@@ -314,6 +314,11 @@ begin
   end;
   if (nEvent and EVENT_IDLE) <> 0 then
     OnIdle;
+  if (nEvent and EVENT_DPI_CHANGED) <> 0 then
+  begin
+    if FForm <> nil then
+      FForm.SetScale(lParam);
+  end;
 end;
 
 function TOutlineFrame.PluginProc(hwnd: HWND; nMsg: NativeInt; wParam: WPARAM; lParam: LPARAM): LRESULT;

@@ -106,7 +106,7 @@ begin
   SetLength(Result, Len);
   PS := NativeUInt(PChar(FChars)) + NativeUInt(Start) * 2;
   PD := NativeUInt(PChar(Result));
-  Move(Pointer(PS)^, Pointer(PD)^, (Len) * 2);
+  Move(Pointer(PS)^, Pointer(PD)^, Len * 2);
 end;
 
 function TStringBuffer.GetString: string;
