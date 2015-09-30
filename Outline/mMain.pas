@@ -424,7 +424,7 @@ end;
 
 function TPropItems.Add: TPropItem;
 begin
-  Result := TPropItem( inherited Add);
+  Result := TPropItem(inherited Add);
 end;
 
 constructor TPropItems.Create;
@@ -439,7 +439,7 @@ end;
 
 function TPropItems.GetItem(Index: NativeInt): TPropItem;
 begin
-  Result := TPropItem( inherited GetItem(Index));
+  Result := TPropItem(inherited GetItem(Index));
 end;
 
 function TPropItems.IndexOf(Item: TPropItem): NativeInt;
@@ -499,7 +499,7 @@ end;
 
 function TOutlineList.Get(Index: Integer): TOutlineItem;
 begin
-  Result := TOutlineItem( inherited Get(Index));
+  Result := TOutlineItem(inherited Get(Index));
 end;
 
 { TMainForm }
