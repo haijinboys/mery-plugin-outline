@@ -3,7 +3,7 @@
 //
 // Copyright (c) Kuro. All Rights Reserved.
 // e-mail: info@haijin-boys.com
-// www:    http://www.haijin-boys.com/
+// www:    https://www.haijin-boys.com/
 // -----------------------------------------------------------------------------
 
 unit mMain;
@@ -19,7 +19,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, Menus, StdCtrls, ComCtrls, ExtCtrls,
 {$IFEND}
-  mPerMonitorDpi, StringBuffer;
+  StringBuffer, mPerMonitorDpi;
 
 const
   MaxLineLength = 2000;
@@ -34,15 +34,21 @@ const
 
 type
   TMatch = array [0 .. MaxDepth - 1] of string;
+
   TReplace = array [0 .. MaxDepth - 1] of string;
+
   TRegEx = array [0 .. MaxDepth - 1] of Boolean;
+
+  TDefaultLevel = (dlCollapse, dlLevel2, dlLevel3, dlLevel4, dlLevel5, dlLevel6,
+    dlLevel7, dlExpand);
 
   TProp = class(TPersistent)
   private
     { Private éŒ¾ }
     FCaption: string;
-    FIndentType: NativeInt;
-    FViewLevel: NativeInt;
+    FIndentType: Integer;
+    FViewLevel: Integer;
+    FDefaultLevel: TDefaultLevel;
   public
     { Public éŒ¾ }
     Match: array [0 .. MaxDepth - 1] of string;
@@ -52,8 +58,9 @@ type
     procedure Assign(Source: TPersistent); override;
     procedure Reset;
     property Caption: string read FCaption write FCaption;
-    property IndentType: NativeInt read FIndentType write FIndentType;
-    property ViewLevel: NativeInt read FViewLevel write FViewLevel;
+    property IndentType: Integer read FIndentType write FIndentType;
+    property ViewLevel: Integer read FViewLevel write FViewLevel;
+    property DefaultLevel: TDefaultLevel read FDefaultLevel write FDefaultLevel;
   end;
 
   TPropItem = class(TCollectionItem)
@@ -78,7 +85,7 @@ type
   TPropItemsEnumerator = class
   private
     { Private éŒ¾ }
-    FIndex: NativeInt;
+    FIndex: Integer;
     FCollection: TPropItems;
   public
     { Public éŒ¾ }
@@ -91,30 +98,30 @@ type
   TPropItems = class(TCollection)
   private
     { Private éŒ¾ }
-    function GetItem(Index: NativeInt): TPropItem;
-    procedure SetItem(Index: NativeInt; Value: TPropItem);
+    function GetItem(Index: Integer): TPropItem;
+    procedure SetItem(Index: Integer; Value: TPropItem);
   public
     { Public éŒ¾ }
     constructor Create;
     function Add: TPropItem;
     function GetEnumerator: TPropItemsEnumerator;
-    function IndexOf(Item: TPropItem): NativeInt;
-    property Items[Index: NativeInt]: TPropItem read GetItem write SetItem; default;
+    function IndexOf(Item: TPropItem): Integer;
+    property Items[Index: Integer]: TPropItem read GetItem write SetItem; default;
   end;
 
   TOutlineItem = class
   private
     { Private éŒ¾ }
     FNode: TTreeNode;
-    FLineNum: NativeInt;
-    FLevel: NativeInt;
+    FLineNum: Integer;
+    FLevel: Integer;
     FLineStr: string;
   public
     { Public éŒ¾ }
-    constructor Create(ALineNum, ALevel: NativeInt; ALineStr: string);
+    constructor Create(ALineNum: Integer; ALevel: Integer; ALineStr: string);
     property Node: TTreeNode read FNode write FNode;
-    property LineNum: NativeInt read FLineNum write FLineNum;
-    property Level: NativeInt read FLevel write FLevel;
+    property LineNum: Integer read FLineNum write FLineNum;
+    property Level: Integer read FLevel write FLevel;
     property LineStr: string read FLineStr write FLineStr;
   end;
 
@@ -131,57 +138,86 @@ type
 
   TMainForm = class(TScaledForm)
     PopupMenu: TPopupMenu;
+    CopyMenuItem: TMenuItem;
+    CopyAllMenuItem: TMenuItem;
+    N1: TMenuItem;
     GoMenuItem: TMenuItem;
     SelectMenuItem: TMenuItem;
-    N1: TMenuItem;
-    CollapseAllMenuItem: TMenuItem;
-    ExpandAllMenuItem: TMenuItem;
     N2: TMenuItem;
+    MoveUpMenuItem: TMenuItem;
+    MoveDownMenuItem: TMenuItem;
+    N3: TMenuItem;
+    CollapseAllMenuItem: TMenuItem;
+    Level2MenuItem: TMenuItem;
+    Level3MenuItem: TMenuItem;
+    Level4MenuItem: TMenuItem;
+    Level5MenuItem: TMenuItem;
+    Level6MenuItem: TMenuItem;
+    Level7MenuItem: TMenuItem;
+    ExpandAllMenuItem: TMenuItem;
+    N4: TMenuItem;
     PropPopupMenuItem: TMenuItem;
+    Timer: TTimer;
     TreeView: TTreeView;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure PopupMenuPopup(Sender: TObject);
+    procedure CopyMenuItemClick(Sender: TObject);
+    procedure CopyAllMenuItemClick(Sender: TObject);
     procedure GoMenuItemClick(Sender: TObject);
     procedure SelectMenuItemClick(Sender: TObject);
+    procedure MoveUpMenuItemClick(Sender: TObject);
+    procedure MoveDownMenuItemClick(Sender: TObject);
     procedure CollapseAllMenuItemClick(Sender: TObject);
+    procedure Level2MenuItemClick(Sender: TObject);
     procedure ExpandAllMenuItemClick(Sender: TObject);
     procedure PropPopupMenuItemClick(Sender: TObject);
+    procedure TimerTimer(Sender: TObject);
     procedure TreeViewClick(Sender: TObject);
     procedure TreeViewDblClick(Sender: TObject);
+    procedure TreeViewDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure TreeViewDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure TreeViewEndDrag(Sender, Target: TObject; X, Y: Integer);
     procedure TreeViewKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   private
     { Private éŒ¾ }
     FEditor: THandle;
-    FBarPos: NativeInt;
+    FBarPos: Integer;
     FFontName: string;
-    FFontSize: NativeInt;
+    FFontSize: Integer;
     FProp: TProp;
     FStringBuffer: TStringBuffer;
     FList: TOutlineList;
+    FPoint: TPoint;
+    FNode: TTreeNode;
+    FDropTarget: TTreeNode;
+    FAfter: Boolean;
     FUpdateOutline: Boolean;
     FUpdateTreeSel: Boolean;
-    FWorkFlag: NativeInt;
+    FWorkFlag: Integer;
     FWorkThread: THandle;
     FAbortThread: Boolean;
     FQueEvent: THandle;
     FMutex: THandle;
-    FPoint: TPoint;
     procedure ReadIni(Prop: TProp; const Mode: string); overload;
     procedure WriteIni(Prop: TProp); overload;
     procedure EraseSection;
     function Find(ALine: PChar; AFind: PChar; ARegEx: Boolean): PChar;
-    function LineMatched(ALine: PChar; ABegin: PChar; ARegExBegin: Boolean; AEnd: PChar; ARegExEnd: Boolean): NativeInt;
+    function LineMatched(ALine: PChar; ABegin: PChar; ARegExBegin: Boolean; AEnd: PChar; ARegExEnd: Boolean): Integer;
     function Matched(ALine, AFind: PChar; ARegEx: Boolean; AStripPrefix: Boolean; AReplace: PChar): Boolean;
-    function CalcIndent(ALine: PChar; ALevel: NativeInt; var ApplyBefore: Boolean; var CustomBarLevel: NativeInt): NativeInt;
-    function CalcOutlineCustom(ALine: PChar; AStripPrefix: Boolean): NativeInt;
-    function GetCurrentLine: NativeInt;
+    function CalcIndent(ALine: PChar; ALevel: Integer; var ApplyBefore: Boolean; var CustomBarLevel: Integer): Integer;
+    function CalcOutlineCustom(ALine: PChar; AStripPrefix: Boolean): Integer;
+    function GetCurrentLine: Integer;
     procedure UpdateTreeViewAll;
     procedure UpdateTreeViewString;
     procedure OutlineSelected(Node: TTreeNode; FocusView, Select: Boolean);
+    procedure MoveNode(Node, Destination: TTreeNode; After: Boolean);
+    procedure TreeMoveSub(Node: TTreeNode; Down: Boolean);
   public
     { Public éŒ¾ }
     procedure ReadIni; overload;
@@ -189,15 +225,17 @@ type
     procedure ResetThread;
     procedure OutlineAll;
     procedure UpdateTreeViewSel;
+    procedure TreeCopy(Node: TTreeNode);
+    procedure TreeMove(Node: TTreeNode; Down: Boolean);
     procedure SetFont;
-    procedure SetScale(const Value: NativeInt);
+    procedure SetScale(const Value: Integer);
     function SetProperties: Boolean;
-    property BarPos: NativeInt read FBarPos write FBarPos;
+    property BarPos: Integer read FBarPos write FBarPos;
     property UpdateOutline: Boolean read FUpdateOutline write FUpdateOutline;
     property UpdateTreeSel: Boolean read FUpdateTreeSel write FUpdateTreeSel;
     property Editor: THandle read FEditor write FEditor;
     property WorkHandle: THandle read FWorkThread write FWorkThread;
-    property WorkFlag: NativeInt read FWorkFlag write FWorkFlag;
+    property WorkFlag: Integer read FWorkFlag write FWorkFlag;
     property AbortThread: Boolean read FAbortThread write FAbortThread;
     property QueEvent: THandle read FQueEvent write FQueEvent;
     property Mutex: THandle read FMutex write FMutex;
@@ -205,16 +243,16 @@ type
 
 var
   MainForm: TMainForm;
-  FFont: TFont;
   FPropItems: TPropItems;
 
 implementation
 
 uses
 {$IF CompilerVersion > 22.9}
-  System.Types, System.StrUtils, System.Math, System.IniFiles,
+  System.Types, System.StrUtils, System.Math, System.IniFiles, Winapi.CommCtrl,
+  Vcl.Clipbrd,
 {$ELSE}
-  Types, StrUtils, Math, IniFiles,
+  Types, StrUtils, Math, IniFiles, CommCtrl, Clipbrd,
 {$IFEND}
   mCommon, mPlugin, mProp;
 
@@ -222,10 +260,10 @@ uses
 
 
 function WaitMessageLoop(Count: LongWord; var Handles: THandle;
-  Milliseconds: DWORD): NativeInt;
+  Milliseconds: DWORD): Integer;
 var
   Quit: Boolean;
-  ExitCode: NativeInt;
+  ExitCode: Integer;
   WaitResult: DWORD;
   Msg: TMsg;
 begin
@@ -238,7 +276,7 @@ begin
         WM_QUIT:
           begin
             Quit := True;
-            ExitCode := NativeInt(Msg.wParam);
+            ExitCode := Integer(Msg.wParam);
             Break;
           end;
         WM_MOUSEMOVE:
@@ -253,7 +291,7 @@ begin
   until WaitResult <> WAIT_OBJECT_0 + 1;
   if Quit then
     PostQuitMessage(ExitCode);
-  Result := NativeInt(WaitResult - WAIT_OBJECT_0);
+  Result := Integer(WaitResult - WAIT_OBJECT_0);
 end;
 
 { TProp }
@@ -271,6 +309,7 @@ begin
       Self.FCaption := Caption;
       Self.FIndentType := IndentType;
       Self.FViewLevel := ViewLevel;
+      Self.FDefaultLevel := DefaultLevel;
       Self.Match := Match;
       Self.Replace := Replace;
       Self.RegEx := RegEx;
@@ -281,7 +320,7 @@ end;
 
 procedure TProp.Reset;
 var
-  I: NativeInt;
+  I: Integer;
 begin
   for I := 0 to MaxDepth - 1 do
   begin
@@ -291,6 +330,7 @@ begin
   end;
   FIndentType := IndentSpaces;
   FViewLevel := 8;
+  FDefaultLevel := dlCollapse;
   if SameText(FCaption, 'Bat') then
     //
   else if SameText(FCaption, 'C#') then
@@ -437,12 +477,12 @@ begin
   Result := TPropItemsEnumerator.Create(Self);
 end;
 
-function TPropItems.GetItem(Index: NativeInt): TPropItem;
+function TPropItems.GetItem(Index: Integer): TPropItem;
 begin
   Result := TPropItem(inherited GetItem(Index));
 end;
 
-function TPropItems.IndexOf(Item: TPropItem): NativeInt;
+function TPropItems.IndexOf(Item: TPropItem): Integer;
 begin
   for Result := 0 to Count - 1 do
     if Items[Result] = Item then
@@ -450,17 +490,18 @@ begin
   Result := -1;
 end;
 
-procedure TPropItems.SetItem(Index: NativeInt; Value: TPropItem);
+procedure TPropItems.SetItem(Index: Integer; Value: TPropItem);
 begin
   inherited SetItem(Index, Value);
 end;
 
 { TOutlineItem }
 
-constructor TOutlineItem.Create(ALineNum, ALevel: NativeInt; ALineStr: string);
+constructor TOutlineItem.Create(ALineNum: Integer; ALevel: Integer;
+  ALineStr: string);
   function TrimLine(const ALine: string): string;
   var
-    I, Len: NativeInt;
+    I, Len: Integer;
   begin
     Result := Trim(ALine);
     Len := Length(Result);
@@ -490,7 +531,7 @@ end;
 
 procedure TOutlineList.Clear;
 var
-  I: NativeInt;
+  I: Integer;
 begin
   for I := 0 to Count - 1 do
     Items[I].Free;
@@ -506,33 +547,23 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  if Win32MajorVersion < 6 then
-    with Font do
-    begin
-      Name := 'Tahoma';
-      Size := 8;
-    end;
+  TScaledForm.DefaultFont.Assign(Font);
   FEditor := ParentWindow;
-  FFont.Assign(Font);
   FFontName := '';
   FFontSize := 0;
   FProp := TProp.Create;
   FStringBuffer := TStringBuffer.Create(0);
   FList := TOutlineList.Create;
+  FPoint := Point(-1, -1);
+  FNode := nil;
+  FDropTarget := nil;
+  FAfter := False;
   FUpdateOutline := False;
   FUpdateTreeSel := False;
   FWorkFlag := 0;
   FQueEvent := CreateEvent(nil, True, False, nil);
   FMutex := CreateMutex(nil, False, nil);
-  FPoint.X := -1;
-  FPoint.Y := -1;
   ReadIni;
-  with Font do
-  begin
-    ChangeScale(FFont.Size, Size);
-    Name := FFont.Name;
-    Size := FFont.Size;
-  end;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -567,29 +598,107 @@ begin
   //
 end;
 
-procedure TMainForm.GoMenuItemClick(Sender: TObject);
-var
-  ANode: TTreeNode;
+procedure TMainForm.PopupMenuPopup(Sender: TObject);
 begin
-  ANode := TreeView.GetNodeAt(FPoint.X, FPoint.Y);
-  if ANode = TreeView.Selected then
-    OutlineSelected(TreeView.Selected, True, False);
+  with TreeView do
+  begin
+    CopyMenuItem.Enabled := Selected <> nil;
+    CopyAllMenuItem.Enabled := Items.Count > 0;
+    GoMenuItem.Enabled := Selected <> nil;
+    SelectMenuItem.Enabled := Selected <> nil;
+    MoveDownMenuItem.Enabled := Selected <> nil;
+    MoveUpMenuItem.Enabled := Selected <> nil;
+  end;
+end;
+
+procedure TMainForm.CopyMenuItemClick(Sender: TObject);
+begin
+  TreeCopy(TreeView.Selected);
+end;
+
+procedure TMainForm.CopyAllMenuItemClick(Sender: TObject);
+var
+  LList: TStringList;
+  LNode: TTreeNode;
+begin
+  LList := TStringList.Create;
+  try
+    with TreeView, Items do
+    begin
+      LNode := GetFirstNode;
+      while LNode <> nil do
+      begin
+        LList.Add(LNode.Text);
+        LNode := LNode.GetNext;
+      end;
+    end;
+    Clipboard.AsText := LList.Text;
+  finally
+    LList.Free;
+  end;
+end;
+
+procedure TMainForm.GoMenuItemClick(Sender: TObject);
+begin
+  OutlineSelected(TreeView.Selected, True, False);
 end;
 
 procedure TMainForm.SelectMenuItemClick(Sender: TObject);
-var
-  ANode: TTreeNode;
 begin
-  ANode := TreeView.GetNodeAt(FPoint.X, FPoint.Y);
-  if ANode = TreeView.Selected then
-    OutlineSelected(TreeView.Selected, True, True);
+  OutlineSelected(TreeView.Selected, True, True);
+end;
+
+procedure TMainForm.MoveUpMenuItemClick(Sender: TObject);
+begin
+  TreeMove(TreeView.Selected, False);
+end;
+
+procedure TMainForm.MoveDownMenuItemClick(Sender: TObject);
+begin
+  TreeMove(TreeView.Selected, True);
 end;
 
 procedure TMainForm.CollapseAllMenuItemClick(Sender: TObject);
 begin
   if WaitMessageLoop(1, FMutex, INFINITE) <> 0 then
     Exit;
-  TreeView.FullCollapse;
+  with TreeView, Items do
+  begin
+    BeginUpdate;
+    try
+      FullCollapse;
+    finally
+      EndUpdate;
+    end;
+  end;
+  ReleaseMutex(FMutex);
+end;
+
+procedure TMainForm.Level2MenuItemClick(Sender: TObject);
+var
+  LLevel: Integer;
+  LNode: TTreeNode;
+begin
+  if WaitMessageLoop(1, FMutex, INFINITE) <> 0 then
+    Exit;
+  LLevel := (Sender as TMenuItem).Tag;
+  with TreeView, Items do
+  begin
+    BeginUpdate;
+    try
+      LNode := GetFirstNode;
+      while LNode <> nil do
+      begin
+        if LNode.Level < LLevel then
+          LNode.Expand(False)
+        else
+          LNode.Collapse(False);
+        LNode := LNode.GetNext;
+      end;
+    finally
+      EndUpdate;
+    end;
+  end;
   ReleaseMutex(FMutex);
 end;
 
@@ -597,7 +706,15 @@ procedure TMainForm.ExpandAllMenuItemClick(Sender: TObject);
 begin
   if WaitMessageLoop(1, FMutex, INFINITE) <> 0 then
     Exit;
-  TreeView.FullExpand;
+  with TreeView, Items do
+  begin
+    BeginUpdate;
+    try
+      FullExpand;
+    finally
+      EndUpdate;
+    end;
+  end;
   ReleaseMutex(FMutex);
 end;
 
@@ -606,22 +723,89 @@ begin
   SetProperties;
 end;
 
+procedure TMainForm.TimerTimer(Sender: TObject);
+var
+  P: TPoint;
+begin
+  with TreeView do
+  begin
+    if not Dragging then
+    begin
+      Timer.Enabled := False;
+      Exit;
+    end;
+    P := ScreenToClient(Mouse.CursorPos);
+    if P.Y < 0 then
+      Perform(WM_VSCROLL, SB_LINEUP, 0)
+    else
+      if P.Y > ClientHeight then
+      Perform(WM_VSCROLL, SB_LINEDOWN, 0)
+    else
+      Timer.Enabled := False;
+  end;
+end;
+
 procedure TMainForm.TreeViewClick(Sender: TObject);
 var
-  ANode: TTreeNode;
+  LNode: TTreeNode;
 begin
-  ANode := TreeView.GetNodeAt(FPoint.X, FPoint.Y);
-  if ANode = TreeView.Selected then
-    OutlineSelected(TreeView.Selected, False, False);
+  LNode := TreeView.GetNodeAt(FPoint.X, FPoint.Y);
+  if LNode <> nil then
+    OutlineSelected(LNode, False, False);
 end;
 
 procedure TMainForm.TreeViewDblClick(Sender: TObject);
 var
-  ANode: TTreeNode;
+  LNode: TTreeNode;
 begin
-  ANode := TreeView.GetNodeAt(FPoint.X, FPoint.Y);
-  if ANode = TreeView.Selected then
-    OutlineSelected(TreeView.Selected, True, False);
+  LNode := TreeView.GetNodeAt(FPoint.X, FPoint.Y);
+  if LNode <> nil then
+    OutlineSelected(LNode, True, False);
+end;
+
+procedure TMainForm.TreeViewDragDrop(Sender, Source: TObject; X, Y: Integer);
+begin
+  if FDropTarget <> nil then
+    MoveNode(FNode, FDropTarget, FAfter);
+end;
+
+procedure TMainForm.TreeViewDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+var
+  H: Integer;
+  R: TRect;
+begin
+  with TreeView do
+  begin
+    Accept := Sender = Source;
+    if Accept then
+    begin
+      H := TreeView_GetItemHeight(Handle);
+      FAfter := False;
+      FDropTarget := GetNodeAt(X, Y);
+      if FDropTarget <> nil then
+      begin
+        R := FDropTarget.DisplayRect(False);
+        if (Y > R.Top + H div 2) and (FDropTarget.getFirstChild = nil) then
+          FAfter := True;
+      end
+      else
+      begin
+        FDropTarget := GetNodeAt(X, Y - H);
+        if FDropTarget <> nil then
+          FAfter := True;
+      end;
+      if FDropTarget <> nil then
+        TreeView_SetInsertMark(Handle, Integer(FDropTarget.ItemId), FAfter);
+      Timer.Enabled := True;
+    end;
+  end;
+end;
+
+procedure TMainForm.TreeViewEndDrag(Sender, Target: TObject; X, Y: Integer);
+begin
+  Timer.Enabled := False;
+  TreeView_SetInsertMark((Sender as TTreeView).Handle, 0, False);
 end;
 
 procedure TMainForm.TreeViewKeyUp(Sender: TObject; var Key: Word;
@@ -636,18 +820,38 @@ end;
 
 procedure TMainForm.TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+var
+  LNode: TTreeNode;
+  LTests: THitTests;
 begin
-  FPoint.X := X;
-  FPoint.Y := Y;
+  LTests := TreeView.GetHitTestInfoAt(X, Y);
+  if not(htOnItem in LTests) then
+  begin
+    FPoint := Point(-1, -1);
+    Exit;
+  end;
+  FPoint := Point(X, Y);
   with TreeView do
-    if (Button = mbRight) and (GetNodeAt(X, Y) <> nil) then
-      Selected := GetNodeAt(X, Y);
+    case Button of
+      mbLeft:
+        begin
+          FNode := GetNodeAt(X, Y);
+          if FNode <> nil then
+            BeginDrag(False);
+        end;
+      mbRight:
+        begin
+          LNode := GetNodeAt(X, Y);
+          if LNode <> nil then
+            Selected := LNode;
+        end;
+    end;
 end;
 
 procedure TMainForm.ReadIni(Prop: TProp; const Mode: string);
 var
   S: string;
-  I: NativeInt;
+  I: Integer;
 begin
   Prop.Caption := Mode;
   if not GetIniFileName(S) then
@@ -660,6 +864,7 @@ begin
         begin
           IndentType := ReadInteger(Format('Outline\%s', [Caption]), 'IndentType', IndentType);
           ViewLevel := ReadInteger(Format('Outline\%s', [Caption]), 'ViewLevel', ViewLevel);
+          DefaultLevel := TDefaultLevel(ReadInteger(Format('Outline\%s', [Caption]), 'DefaultLevel', Integer(DefaultLevel)));
           for I := 0 to MaxDepth - 1 do
           begin
             Match[I] := ReadString(Format('Outline\%s', [Caption]), Format('Match%d', [I]), Match[I]);
@@ -678,7 +883,7 @@ end;
 procedure TMainForm.WriteIni(Prop: TProp);
 var
   S: string;
-  I: NativeInt;
+  I: Integer;
 begin
   if not GetIniFileName(S) then
     Exit;
@@ -688,6 +893,7 @@ begin
       begin
         WriteInteger(Format('Outline\%s', [Caption]), 'IndentType', IndentType);
         WriteInteger(Format('Outline\%s', [Caption]), 'ViewLevel', ViewLevel);
+        WriteInteger(Format('Outline\%s', [Caption]), 'DefaultLevel', Integer(DefaultLevel));
         for I := 0 to MaxDepth - 1 do
         begin
           WriteString(Format('Outline\%s', [Caption]), Format('Match%d', [I]), Match[I]);
@@ -704,7 +910,7 @@ end;
 procedure TMainForm.EraseSection;
 var
   S: string;
-  I: NativeInt;
+  I: Integer;
   Sections: TStrings;
 begin
   if FIniFailed or (not GetIniFileName(S)) then
@@ -733,7 +939,7 @@ end;
 function TMainForm.Find(ALine, AFind: PChar; ARegEx: Boolean): PChar;
 var
   FindRegexInfo: TFindRegExInfo;
-  AStart, AEnd, ANext: PChar;
+  LStart, LEnd, LNext: PChar;
 begin
   if AFind^ = #0 then
   begin
@@ -747,16 +953,16 @@ begin
   end;
   if ARegEx then
   begin
-    AStart := nil;
-    AEnd := nil;
-    ANext := nil;
+    LStart := nil;
+    LEnd := nil;
+    LNext := nil;
     FindRegexInfo.cbSize := SizeOf(FindRegexInfo);
     FindRegexInfo.nFlags := FLAG_FIND_MATCH_CASE;
     FindRegexInfo.pszRegEx := PChar(AFind);
     FindRegexInfo.pszText := ALine;
-    FindRegexInfo.ppszStart := @AStart;
-    FindRegexInfo.ppszEnd := @AEnd;
-    FindRegexInfo.ppszNext := @ANext;
+    FindRegexInfo.ppszStart := @LStart;
+    FindRegexInfo.ppszEnd := @LEnd;
+    FindRegexInfo.ppszNext := @LNext;
     if Editor_FindRegEx(FEditor, @FindRegexInfo) then
       Result := FindRegexInfo.ppszNext^
     else
@@ -765,10 +971,10 @@ begin
   end
   else
   begin
-    AStart := StrPos(ALine, AFind);
-    if AStart <> nil then
+    LStart := StrPos(ALine, AFind);
+    if LStart <> nil then
     begin
-      Result := AStart + StrLen(AFind);
+      Result := LStart + StrLen(AFind);
       Exit;
     end;
   end;
@@ -776,20 +982,20 @@ begin
 end;
 
 function TMainForm.LineMatched(ALine, ABegin: PChar; ARegExBegin: Boolean;
-  AEnd: PChar; ARegExEnd: Boolean): NativeInt;
+  AEnd: PChar; ARegExEnd: Boolean): Integer;
 var
   P: PChar;
-  ALevel: NativeInt;
+  LLevel: Integer;
 begin
   P := ALine;
-  ALevel := 0;
+  LLevel := 0;
   if ALine^ = #0 then
   begin
     if ABegin^ = #0 then
-      Inc(ALevel);
+      Inc(LLevel);
     if AEnd^ = #0 then
-      Dec(ALevel);
-    Result := ALevel;
+      Dec(LLevel);
+    Result := LLevel;
     Exit;
   end;
   while P^ <> #0 do
@@ -797,7 +1003,7 @@ begin
     P := Find(P, ABegin, ARegExBegin);
     if P = nil then
       Break;
-    Inc(ALevel);
+    Inc(LLevel);
   end;
   P := ALine;
   while P^ <> #0 do
@@ -805,9 +1011,9 @@ begin
     P := Find(P, AEnd, ARegExEnd);
     if P = nil then
       Break;
-    Dec(ALevel);
+    Dec(LLevel);
   end;
-  Result := ALevel;
+  Result := LLevel;
 end;
 
 function TMainForm.Matched(ALine, AFind: PChar; ARegEx, AStripPrefix: Boolean;
@@ -829,7 +1035,7 @@ function TMainForm.Matched(ALine, AFind: PChar; ARegEx, AStripPrefix: Boolean;
 
 var
   MatchRegexInfo: TMatchRegexInfo;
-  LineLen, FindLen, ReplaceLen: NativeInt;
+  LineLen, FindLen, ReplaceLen: Integer;
 begin
   if ARegEx then
   begin
@@ -866,13 +1072,13 @@ begin
   Result := False;
 end;
 
-function TMainForm.CalcIndent(ALine: PChar; ALevel: NativeInt;
-  var ApplyBefore: Boolean; var CustomBarLevel: NativeInt): NativeInt;
+function TMainForm.CalcIndent(ALine: PChar; ALevel: Integer;
+  var ApplyBefore: Boolean; var CustomBarLevel: Integer): Integer;
 var
   P, Temp: PChar;
   BeginChar, EndChar: Char;
   Tested: Boolean;
-  Ret: NativeInt;
+  Ret: Integer;
 begin
   ApplyBefore := False;
   CustomBarLevel := 0;
@@ -957,9 +1163,9 @@ begin
 end;
 
 function TMainForm.CalcOutlineCustom(ALine: PChar;
-  AStripPrefix: Boolean): NativeInt;
+  AStripPrefix: Boolean): Integer;
 var
-  I: NativeInt;
+  I: Integer;
 begin
   for I := MaxDepth - 1 downto 0 do
   begin
@@ -975,7 +1181,7 @@ begin
   Result := 0;
 end;
 
-function TMainForm.GetCurrentLine: NativeInt;
+function TMainForm.GetCurrentLine: Integer;
 var
   P: TPoint;
 begin
@@ -985,48 +1191,188 @@ end;
 
 procedure TMainForm.OutlineSelected(Node: TTreeNode; FocusView, Select: Boolean);
 var
-  I, P, AOutline, ALevel: NativeInt;
-  APos, APosBottom: TPoint;
+  I, J, LOutline: Integer;
+  LLevel: Integer;
+  LPos, LPosBottom: TPoint;
 begin
   if Node = nil then
     Exit;
-  AOutline := Node.StateIndex;
-  if not InRange(AOutline, 0, FList.Count - 1) then
+  LOutline := Node.StateIndex;
+  if not InRange(LOutline, 0, FList.Count - 1) then
     Exit;
-  APos.X := 0;
-  APos.Y := FList[AOutline].LineNum;
+  LPos.X := 0;
+  LPos.Y := FList[LOutline].LineNum;
+  Editor_SetCaretPos(FEditor, POS_LOGICAL, @LPos);
+  if FocusView then
+    Editor_ExecCommand(FEditor, MEID_WINDOW_ACTIVE_PANE);
+  if Select then
+  begin
+    LPosBottom.X := 0;
+    I := LOutline;
+    if Node.HasChildren then
+    begin
+      LLevel := FList[LOutline].Level;
+      for J := Succ(LOutline) to FList.Count - 1 do
+      begin
+        if FList[J].Level > LLevel then
+          I := J
+        else
+          Break;
+      end;
+    end;
+    if I < FList.Count - 1 then
+      LPosBottom.Y := FList[Succ(I)].LineNum
+    else
+      LPosBottom.Y := Editor_GetLines(FEditor, POS_LOGICAL) - 1;
+    Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPosBottom, False);
+    Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, True);
+  end;
+  Editor_GetCaretPos(FEditor, POS_VIEW, @LPos);
+  Editor_SetScrollPos(FEditor, @LPos);
+end;
+
+procedure TMainForm.MoveNode(Node, Destination: TTreeNode; After: Boolean);
+  function GetNextCluster(Value: TTreeNode): TTreeNode;
+  var
+    NextNode: TTreeNode;
+  begin
+    repeat
+      NextNode := Value.getNextSibling;
+      if NextNode <> nil then
+      begin
+        Result := NextNode;
+        Exit;
+      end;
+      Value := Value.Parent;
+    until Value = nil;
+    Result := nil;
+  end;
+
+var
+  NodeTop, NodeBottom, LineTop, LineBottom, Line: Integer;
+  NextNode: TTreeNode;
+  LOutline: Integer;
+  LPos: TPoint;
+  LSize: Cardinal;
+  LBuf: array of Char;
+begin
+  if (Node = nil) or (Destination = nil) or (Node = Destination) then
+    Exit;
+  NodeTop := Node.StateIndex;
+  if not InRange(NodeTop, 0, FList.Count - 1) then
+    Exit;
+  LineTop := FList[NodeTop].LineNum;
+  NextNode := GetNextCluster(Node);
+  if NextNode <> nil then
+  begin
+    NodeBottom := NextNode.StateIndex;
+    if not InRange(NodeBottom, 0, FList.Count - 1) then
+      Exit;
+    LineBottom := FList[NodeBottom].LineNum;
+  end
+  else
+  begin
+    LPos.X := MaxInt;
+    LPos.Y := MaxInt;
+    Editor_SetCaretPos(FEditor, POS_VIEW, @LPos);
+    Editor_GetCaretPos(FEditor, POS_LOGICAL, @LPos);
+    LineBottom := LPos.Y;
+    if LPos.X > 0 then
+    begin
+      Editor_InsertString(FEditor, PChar(string(#10)));
+      Inc(LineBottom);
+    end;
+  end;
+  TreeView.Items.Delete(Node);
+  LOutline := Destination.StateIndex;
+  if not InRange(LOutline, 0, FList.Count - 1) then
+    Exit;
+  if After then
+  begin
+    NextNode := Destination.GetLastChild;
+    if NextNode <> nil then
+    begin
+      LOutline := NextNode.StateIndex;
+      if not InRange(LOutline, 0, FList.Count - 1) then
+        Exit;
+    end;
+    Inc(LOutline);
+    if LOutline < FList.Count then
+      Line := FList[LOutline].LineNum
+    else
+    begin
+      LPos.X := MaxInt;
+      LPos.Y := MaxInt;
+      Editor_SetCaretPos(FEditor, POS_VIEW, @LPos);
+      Editor_GetCaretPos(FEditor, POS_LOGICAL, @LPos);
+      Line := LPos.Y;
+      if LPos.X > 0 then
+      begin
+        Editor_InsertString(FEditor, PChar(string(#10)));
+        Inc(Line);
+      end;
+    end;
+  end
+  else
+    Line := FList[LOutline].LineNum;
   Editor_Redraw(FEditor, False);
   try
-    Editor_SetCaretPos(FEditor, POS_LOGICAL, @APos);
-    if FocusView then
-      Editor_ExecCommand(FEditor, MEID_WINDOW_ACTIVE_PANE);
-    if Select then
+    LPos.X := 0;
+    LPos.Y := LineBottom;
+    Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, False);
+    LPos.Y := LineTop;
+    Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, True);
+    LSize := Editor_GetSelText(FEditor, 0, nil);
+    SetLength(LBuf, LSize);
+    if Length(LBuf) > 0 then
     begin
-      APosBottom.X := 0;
-      I := AOutline;
-      if Node.HasChildren then
-      begin
-        ALevel := FList[AOutline].Level;
-        for P := Succ(AOutline) to FList.Count - 1 do
-        begin
-          if FList[P].Level > ALevel then
-            I := P
-          else
-            Break;
-        end;
-      end;
-      if I < FList.Count - 1 then
-        APosBottom.Y := FList[Succ(I)].LineNum
+      Editor_GetSelText(FEditor, LSize, PChar(LBuf));
+      if Line < LineTop then
+        Editor_ExecCommand(FEditor, MEID_EDIT_DELETE);
+      LPos.Y := Line;
+      Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, False);
+      Editor_InsertString(FEditor, PChar(LBuf));
+      if Line < LineTop then
+        Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, False)
       else
-        APosBottom.Y := Editor_GetLines(FEditor, POS_LOGICAL) - 1;
-      Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @APosBottom, False);
-      Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @APos, True);
+      begin
+        LPos.Y := LineBottom;
+        Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, False);
+        LPos.Y := LineTop;
+        Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, True);
+        Editor_ExecCommand(FEditor, MEID_EDIT_DELETE);
+        LPos.Y := Line - (LineBottom - LineTop);
+        Editor_SetCaretPosEx(FEditor, POS_LOGICAL, @LPos, False);
+      end;
     end;
-    Editor_GetCaretPos(FEditor, POS_VIEW, @APos);
-    Editor_SetScrollPos(FEditor, @APos);
   finally
     Editor_Redraw(FEditor, True);
   end;
+  FList.Clear;
+  FUpdateOutline := True;
+end;
+
+procedure TMainForm.TreeMoveSub(Node: TTreeNode; Down: Boolean);
+var
+  LNode: TTreeNode;
+  After: Boolean;
+begin
+  After := False;
+  if Down then
+  begin
+    TreeView_Expand(TreeView.Handle, Node.ItemId, TVE_COLLAPSE);
+    LNode := Node.GetNextVisible;
+    if LNode = nil then
+      Exit;
+    After := True;
+  end
+  else
+  begin
+    LNode := Node.GetPrevVisible;
+    if LNode = nil then
+      Exit;
+  end;
+  MoveNode(Node, LNode, After);
 end;
 
 procedure TMainForm.ReadIni;
@@ -1038,18 +1384,14 @@ begin
     Exit;
   with TMemIniFile.Create(S, TEncoding.UTF8) do
     try
-      with FFont do
+      with TScaledForm.DefaultFont do
         if ValueExists('MainForm', 'FontName') then
         begin
           Name := ReadString('MainForm', 'FontName', Name);
           Size := ReadInteger('MainForm', 'FontSize', Size);
-          Height := MulDiv(Height, 96, Screen.PixelsPerInch);
         end
-        else if (Win32MajorVersion > 6) or ((Win32MajorVersion = 6) and (Win32MinorVersion >= 2)) then
-        begin
+        else if CheckWin32Version(6, 2) then
           Assign(Screen.IconFont);
-          Height := MulDiv(Height, 96, Screen.PixelsPerInch);
-        end;
       FFontName := ReadString('Outline', 'FontName', FFontName);
       FFontSize := ReadInteger('Outline', 'FontSize', FFontSize);
     finally
@@ -1106,9 +1448,9 @@ end;
 
 procedure TMainForm.UpdateTreeViewAll;
 var
-  I, J: NativeInt;
+  I, J: Integer;
   ParentItem: array [0 .. MaxDepth] of TTreeNode;
-  ANode: TTreeNode;
+  LNode: TTreeNode;
   Item: TOutlineItem;
 begin
   TreeView.Items.BeginUpdate;
@@ -1122,18 +1464,35 @@ begin
       Item := FList[I];
       if Item.Node <> nil then
       begin
-        ANode := TreeView.Items.GetNode(Item.Node.ItemId);
-        if ANode <> nil then
-          ANode.Text := Item.LineStr;
+        LNode := TreeView.Items.GetNode(Item.Node.ItemId);
+        if LNode <> nil then
+          LNode.Text := Item.LineStr;
       end
       else
       begin
         if ParentItem[Item.Level - 1] = nil then
-          ANode := TreeView.Items.AddChild(nil, Item.LineStr)
+          LNode := TreeView.Items.AddChild(nil, Item.LineStr)
         else
-          ANode := TreeView.Items.AddChild(ParentItem[Item.Level - 1], Item.LineStr);
-        ANode.StateIndex := I;
-        Item.Node := ANode;
+          LNode := TreeView.Items.AddChild(ParentItem[Item.Level - 1], Item.LineStr);
+        with LNode do
+        begin
+          StateIndex := I;
+          if Parent <> nil then
+            case FProp.DefaultLevel of
+              dlCollapse:
+                ;
+              dlLevel2 .. dlLevel7:
+                begin
+                  if Parent.Level < Integer(FProp.DefaultLevel) then
+                    Parent.Expand(False)
+                  else
+                    Parent.Collapse(False);
+                end;
+            else
+              Parent.Expand(False);
+            end;
+        end;
+        Item.Node := LNode;
       end;
       for J := Item.Level to MaxDepth do
         ParentItem[J] := Item.Node;
@@ -1147,22 +1506,22 @@ end;
 
 procedure TMainForm.OutlineAll;
 var
-  I, Len: NativeInt;
-  AList: TOutlineList;
+  I, Len: Integer;
+  LList: TOutlineList;
   Text: array [0 .. MaxLineLength - 1] of Char;
   LineInfo: TGetLineInfo;
-  OldLine, EmptyLine: NativeInt;
-  Level, NewLevel: NativeInt;
+  OldLine, EmptyLine: Integer;
+  Level, NewLevel: Integer;
   ApplyBefore: Boolean;
-  CustomBarLevel: NativeInt;
-  Line, Temp: NativeInt;
+  CustomBarLevel: Integer;
+  Line, Temp: Integer;
   UpdateAll: Boolean;
-  FirstUpdate: NativeInt;
-  Src, Dest: NativeInt;
-  ANode: TTreeNode;
-  AItem: TOutlineItem;
+  FirstUpdate: Integer;
+  Src, Dest: Integer;
+  LNode: TTreeNode;
+  LItem: TOutlineItem;
 begin
-  AList := TOutlineList.Create;
+  LList := TOutlineList.Create;
   try
     Len := Editor_GetLines(FEditor, POS_LOGICAL);
     OldLine := -1;
@@ -1189,7 +1548,7 @@ begin
         begin
           if (NewLevel > Level) and (NewLevel > 0) then
           begin
-            if (not ApplyBefore) and (NativeInt(LineInfo.yLine) > 0) and (OldLine <> NativeInt(LineInfo.yLine) - 1) then
+            if (not ApplyBefore) and (Integer(LineInfo.yLine) > 0) and (OldLine <> Integer(LineInfo.yLine) - 1) then
             begin
               if (EmptyLine <> -1) and (EmptyLine > 0) and (Text[0] <> #0) then
                 Line := EmptyLine - 1
@@ -1203,7 +1562,7 @@ begin
             end
             else
               Line := LineInfo.yLine;
-            AList.Add(TOutlineItem.Create(Line, Min(NewLevel, MaxDepth), Text));
+            LList.Add(TOutlineItem.Create(Line, Min(NewLevel, MaxDepth), Text));
             OldLine := Line;
           end;
         end;
@@ -1211,7 +1570,7 @@ begin
       else if CustomBarLevel > 0 then
       begin
         if CustomBarLevel <= FProp.ViewLevel then
-          AList.Add(TOutlineItem.Create(LineInfo.yLine, Min(CustomBarLevel, MaxDepth), Text));
+          LList.Add(TOutlineItem.Create(LineInfo.yLine, Min(CustomBarLevel, MaxDepth), Text));
       end;
       Level := NewLevel;
       if Text[0] <> #0 then
@@ -1237,11 +1596,11 @@ begin
     end
     else
     begin
-      for I := 0 to Min(FList.Count, AList.Count) - 1 do
+      for I := 0 to Min(FList.Count, LList.Count) - 1 do
       begin
         if FAbortThread then
           Exit;
-        if FList[I].Level <> AList[I].Level then
+        if FList[I].Level <> LList[I].Level then
         begin
           if not UpdateAll then
           begin
@@ -1255,10 +1614,10 @@ begin
           begin
             if FList[I].Node = nil then
               Break;
-            ANode := FList[I].Node.GetNext;
-            if ANode = nil then
+            LNode := FList[I].Node.GetNext;
+            if LNode = nil then
               Break;
-            ANode.Delete;
+            LNode.Delete;
           end;
           if FList[I].Node <> nil then
             FList[I].Node.Delete;
@@ -1268,13 +1627,13 @@ begin
     end;
     Src := 0;
     Dest := 0;
-    for I := 0 to Min(FirstUpdate, AList.Count) - 1 do
+    for I := 0 to Min(FirstUpdate, LList.Count) - 1 do
     begin
       with FList[I] do
       begin
-        LineNum := AList[I].LineNum;
-        Level := AList[I].Level;
-        LineStr := AList[I].LineStr;
+        LineNum := LList[I].LineNum;
+        Level := LList[I].Level;
+        LineStr := LList[I].LineStr;
       end;
       Inc(Src);
       Inc(Dest);
@@ -1287,32 +1646,32 @@ begin
       begin
         if FList[Dest].Node = nil then
           Break;
-        ANode := FList[Dest].Node.GetNext;
-        if ANode = nil then
+        LNode := FList[Dest].Node.GetNext;
+        if LNode = nil then
           Break;
-        ANode.Delete;
+        LNode.Delete;
       end;
       if FList[Dest].Node <> nil then
         FList[Dest].Node.Delete;
       for I := FList.Count - 1 downto Dest do
       begin
-        AItem := FList[I];
-        FList.Remove(AItem);
-        AItem.Free;
+        LItem := FList[I];
+        FList.Remove(LItem);
+        LItem.Free;
       end;
     end;
-    if InRange(Src, 0, AList.Count - 1) then
+    if InRange(Src, 0, LList.Count - 1) then
     begin
-      for I := Src to AList.Count - 1 do
+      for I := Src to LList.Count - 1 do
       begin
         if not UpdateAll then
           UpdateAll := True;
-        with AList[I] do
+        with LList[I] do
         begin
-          AItem := TOutlineItem.Create(LineNum, Level, LineStr);
-          AItem.Node := Node;
+          LItem := TOutlineItem.Create(LineNum, Level, LineStr);
+          LItem.Node := Node;
         end;
-        FList.Add(AItem);
+        FList.Add(LItem);
       end;
     end;
     if FAbortThread then
@@ -1322,14 +1681,14 @@ begin
     else
       UpdateTreeViewString;
   finally
-    AList.Free;
+    LList.Free;
   end;
 end;
 
 procedure TMainForm.UpdateTreeViewSel;
 var
-  I: NativeInt;
-  CurrentLine: NativeInt;
+  I: Integer;
+  CurrentLine: Integer;
 begin
   if FList.Count = 0 then
     Exit;
@@ -1354,37 +1713,56 @@ begin
     FList[I].Node.Selected := True;
 end;
 
+procedure TMainForm.TreeCopy(Node: TTreeNode);
+begin
+  if Node = nil then
+    Node := TreeView.Selected;
+  if Node <> nil then
+    Clipboard.AsText := Node.Text;
+end;
+
+procedure TMainForm.TreeMove(Node: TTreeNode; Down: Boolean);
+begin
+  if WaitMessageLoop(1, FMutex, INFINITE) <> 0 then
+    Exit;
+  if Node = nil then
+    Node := TreeView.Selected;
+  if Node <> nil then
+    TreeMoveSub(Node, Down);
+  ReleaseMutex(FMutex);
+end;
+
 procedure TMainForm.SetFont;
 var
-  AName: array [0 .. 255] of Char;
-  ASize: NativeInt;
-  AFore, ABack: TColor;
+  LName: array [0 .. 255] of Char;
+  LSize: Integer;
+  LFore, LBack: TColor;
 begin
-  Editor_Info(FEditor, MI_GET_FONT_NAME, LPARAM(@AName));
-  ASize := Editor_Info(FEditor, MI_GET_FONT_SIZE, 0);
-  AFore := TColor(Editor_Info(FEditor, MI_GET_TEXT_COLOR, COLOR_GENERAL));
-  ABack := TColor(Editor_Info(FEditor, MI_GET_BACK_COLOR, COLOR_GENERAL));
+  Editor_Info(FEditor, MI_GET_FONT_NAME, LPARAM(@LName));
+  LSize := Editor_Info(FEditor, MI_GET_FONT_SIZE, 0);
+  LFore := TColor(Editor_Info(FEditor, MI_GET_TEXT_COLOR, COLOR_GENERAL));
+  LBack := TColor(Editor_Info(FEditor, MI_GET_BACK_COLOR, COLOR_GENERAL));
   if Editor_Info(FEditor, MI_GET_INVERT_COLOR, 0) = 1 then
   begin
-    AFore := GetInvertColor(AFore);
-    ABack := GetInvertColor(ABack);
+    LFore := GetInvertColor(LFore);
+    LBack := GetInvertColor(LBack);
   end;
   with TreeView do
   begin
     with Font do
     begin
-      Name := IfThen(FFontName <> '', FFontName, AName);
-      Size := IfThen(FFontSize <> 0, FFontSize, ASize);
+      Name := IfThen(FFontName <> '', FFontName, LName);
+      Size := IfThen(FFontSize <> 0, FFontSize, LSize);
       Height := MulDiv(Height, Self.PixelsPerInch, 96);
-      Color := AFore;
+      Color := LFore;
     end;
-    Color := ABack;
+    Color := LBack;
   end;
 end;
 
-procedure TMainForm.SetScale(const Value: NativeInt);
+procedure TMainForm.SetScale(const Value: Integer);
 var
-  P: NativeInt;
+  P: Integer;
 begin
   P := PixelsPerInch;
   PixelsPerInch := Value;
@@ -1395,22 +1773,22 @@ end;
 
 procedure TMainForm.UpdateTreeViewString;
 var
-  I: NativeInt;
-  ANode: TTreeNode;
+  I: Integer;
+  LNode: TTreeNode;
 begin
   for I := 0 to FList.Count - 1 do
     if FList[I].Node <> nil then
     begin
-      ANode := TreeView.Items.GetNode(FList[I].Node.ItemId);
-      if ANode <> nil then
-        ANode.Text := FList[I].LineStr;
+      LNode := TreeView.Items.GetNode(FList[I].Node.ItemId);
+      if LNode <> nil then
+        LNode.Text := FList[I].LineStr;
     end;
 end;
 
 function TMainForm.SetProperties: Boolean;
 var
   S, P: PChar;
-  Len: NativeInt;
+  Len: Cardinal;
   Item: TPropItem;
   Items: TPropItems;
 begin
@@ -1445,14 +1823,5 @@ begin
     FreeAndNil(Items);
   end;
 end;
-
-initialization
-
-FFont := TFont.Create;
-
-finalization
-
-if Assigned(FFont) then
-  FreeAndNil(FFont);
 
 end.

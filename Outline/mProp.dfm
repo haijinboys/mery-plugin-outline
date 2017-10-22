@@ -12,7 +12,6 @@ object PropForm: TPropForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  Position = poScreenCenter
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -107,6 +106,14 @@ object PropForm: TPropForm
     Caption = #26368#22823#12524#12505#12523'(&A):'
     FocusControl = ViewLevelComboBox
   end
+  object DefaultLevelLabel: TLabel
+    Left = 8
+    Top = 200
+    Width = 72
+    Height = 13
+    Caption = #26082#23450#12524#12505#12523'(&D):'
+    FocusControl = DefaultLevelComboBox
+  end
   object ModeLabel: TLabel
     Left = 8
     Top = 56
@@ -169,112 +176,112 @@ object PropForm: TPropForm
     Top = 24
     Width = 121
     Height = 21
-    TabOrder = 4
+    TabOrder = 5
   end
   object RegExCheckBox1: TCheckBox
     Left = 296
     Top = 24
     Width = 17
     Height = 17
-    TabOrder = 5
+    TabOrder = 6
   end
   object MatchEdit2: TEdit
     Left = 168
     Top = 48
     Width = 121
     Height = 21
-    TabOrder = 7
+    TabOrder = 8
   end
   object RegExCheckBox2: TCheckBox
     Left = 296
     Top = 48
     Width = 17
     Height = 17
-    TabOrder = 8
+    TabOrder = 9
   end
   object MatchEdit3: TEdit
     Left = 168
     Top = 72
     Width = 121
     Height = 21
-    TabOrder = 10
+    TabOrder = 11
   end
   object RegExCheckBox3: TCheckBox
     Left = 296
     Top = 72
     Width = 17
     Height = 17
-    TabOrder = 11
+    TabOrder = 12
   end
   object MatchEdit4: TEdit
     Left = 168
     Top = 96
     Width = 121
     Height = 21
-    TabOrder = 13
+    TabOrder = 14
   end
   object RegExCheckBox4: TCheckBox
     Left = 296
     Top = 96
     Width = 17
     Height = 17
-    TabOrder = 14
+    TabOrder = 15
   end
   object MatchEdit5: TEdit
     Left = 168
     Top = 120
     Width = 121
     Height = 21
-    TabOrder = 16
+    TabOrder = 17
   end
   object RegExCheckBox5: TCheckBox
     Left = 296
     Top = 120
     Width = 17
     Height = 17
-    TabOrder = 17
+    TabOrder = 18
   end
   object MatchEdit6: TEdit
     Left = 168
     Top = 144
     Width = 121
     Height = 21
-    TabOrder = 19
+    TabOrder = 20
   end
   object RegExCheckBox6: TCheckBox
     Left = 296
     Top = 144
     Width = 17
     Height = 17
-    TabOrder = 20
+    TabOrder = 21
   end
   object MatchEdit7: TEdit
     Left = 168
     Top = 168
     Width = 121
     Height = 21
-    TabOrder = 22
+    TabOrder = 23
   end
   object RegExCheckBox7: TCheckBox
     Left = 296
     Top = 168
     Width = 17
     Height = 17
-    TabOrder = 23
+    TabOrder = 24
   end
   object MatchEdit8: TEdit
     Left = 168
     Top = 192
     Width = 121
     Height = 21
-    TabOrder = 25
+    TabOrder = 26
   end
   object RegExCheckBox8: TCheckBox
     Left = 296
     Top = 192
     Width = 17
     Height = 17
-    TabOrder = 26
+    TabOrder = 27
   end
   object OKButton: TButton
     Left = 272
@@ -284,7 +291,7 @@ object PropForm: TPropForm
     Caption = 'OK'
     Default = True
     ModalResult = 1
-    TabOrder = 29
+    TabOrder = 30
   end
   object CancelButton: TButton
     Left = 360
@@ -294,7 +301,7 @@ object PropForm: TPropForm
     Cancel = True
     Caption = #12461#12515#12531#12475#12523
     ModalResult = 2
-    TabOrder = 30
+    TabOrder = 31
   end
   object ViewLevelComboBox: TComboBox
     Left = 8
@@ -313,6 +320,23 @@ object PropForm: TPropForm
       '7'
       '8')
   end
+  object DefaultLevelComboBox: TComboBox
+    Left = 8
+    Top = 216
+    Width = 129
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 4
+    Items.Strings = (
+      #12377#12409#12390#32302#23567
+      '2'
+      '3'
+      '4'
+      '5'
+      '6'
+      '7'
+      #12377#12409#12390#23637#38283)
+  end
   object ModeComboBox: TComboBox
     Left = 8
     Top = 72
@@ -329,7 +353,7 @@ object PropForm: TPropForm
     Width = 81
     Height = 25
     Caption = #12522#12475#12483#12488'(&R)'
-    TabOrder = 28
+    TabOrder = 29
     OnClick = ResetButtonClick
   end
   object ReplaceEdit1: TEdit
@@ -337,55 +361,55 @@ object PropForm: TPropForm
     Top = 24
     Width = 121
     Height = 21
-    TabOrder = 6
+    TabOrder = 7
   end
   object ReplaceEdit2: TEdit
     Left = 320
     Top = 48
     Width = 121
     Height = 21
-    TabOrder = 9
+    TabOrder = 10
   end
   object ReplaceEdit3: TEdit
     Left = 320
     Top = 72
     Width = 121
     Height = 21
-    TabOrder = 12
+    TabOrder = 13
   end
   object ReplaceEdit4: TEdit
     Left = 320
     Top = 96
     Width = 121
     Height = 21
-    TabOrder = 15
+    TabOrder = 16
   end
   object ReplaceEdit5: TEdit
     Left = 320
     Top = 120
     Width = 121
     Height = 21
-    TabOrder = 18
+    TabOrder = 19
   end
   object ReplaceEdit6: TEdit
     Left = 320
     Top = 144
     Width = 121
     Height = 21
-    TabOrder = 21
+    TabOrder = 22
   end
   object ReplaceEdit7: TEdit
     Left = 320
     Top = 168
     Width = 121
     Height = 21
-    TabOrder = 24
+    TabOrder = 25
   end
   object ReplaceEdit8: TEdit
     Left = 320
     Top = 192
     Width = 121
     Height = 21
-    TabOrder = 27
+    TabOrder = 28
   end
 end

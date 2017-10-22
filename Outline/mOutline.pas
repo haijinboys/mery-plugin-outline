@@ -3,7 +3,7 @@
 //
 // Copyright (c) Kuro. All Rights Reserved.
 // e-mail: info@haijin-boys.com
-// www:    http://www.haijin-boys.com/
+// www:    https://www.haijin-boys.com/
 // -----------------------------------------------------------------------------
 
 unit mOutline;
@@ -20,16 +20,16 @@ uses
 
 resourcestring
   SName = 'アウトライン';
-  SVersion = '3.0.0';
+  SVersion = '2.3.1';
 
 type
   TOutlineFrame = class(TFrame)
   private
     { Private 宣言 }
     FForm: TMainForm;
-    FClientID: LongWord;
-    FPos: NativeInt;
-    FBarPos: NativeInt;
+    FClientID: Cardinal;
+    FPos: Integer;
+    FBarPos: Integer;
     FOpenStartup: Boolean;
     function QueryProperties: Boolean;
     function SetProperties: Boolean;
@@ -44,8 +44,8 @@ type
     procedure OnIdle;
     procedure OnCommand(hwnd: HWND); override;
     function QueryStatus(hwnd: HWND; pbChecked: PBOOL): BOOL; override;
-    procedure OnEvents(hwnd: HWND; nEvent: NativeInt; lParam: LPARAM); override;
-    function PluginProc(hwnd: HWND; nMsg: NativeInt; wParam: WPARAM; lParam: LPARAM): LRESULT; override;
+    procedure OnEvents(hwnd: HWND; nEvent: Cardinal; lParam: LPARAM); override;
+    function PluginProc(hwnd: HWND; nMsg: Cardinal; wParam: WPARAM; lParam: LPARAM): LRESULT; override;
   end;
 
 procedure WorkThread(AForm: Pointer);
@@ -110,6 +110,45 @@ begin
       if ((Msg.wParam >= VK_PRIOR) and (Msg.wParam <= VK_DELETE)) or (Msg.wParam = VK_TAB) or (Msg.wParam = VK_BACK) or (Msg.wParam = VK_ESCAPE) or (Msg.wParam = VK_RETURN) then
       begin
         SendMessage(GetFocus, Msg.message, Msg.wParam, Msg.lParam);
+        Result := True;
+        Exit;
+      end;
+      if (Msg.wParam = Ord('C')) and Ctrl then
+      begin
+        FForm.TreeCopy(nil);
+        Result := True;
+        Exit;
+      end;
+    end;
+    if Msg.message = WM_SYSKEYDOWN then
+    begin
+      if ((Msg.wParam = VK_UP) or (Msg.wParam = VK_DOWN)) and (GetKeyState(VK_MENU) < 0) then
+      begin
+        FForm.TreeMove(nil, Msg.wParam = VK_DOWN);
+        Result := True;
+        Exit;
+      end;
+      if ((Msg.wParam in [VK_NUMPAD1 .. VK_NUMPAD9]) or (Msg.wParam in [$31 .. $38])) and (GetKeyState(VK_MENU) < 0) then
+      begin
+        with FForm do
+          case Msg.wParam of
+            VK_NUMPAD1, $31:
+              CollapseAllMenuItemClick(nil);
+            VK_NUMPAD2, $32:
+              Level2MenuItemClick(Level2MenuItem);
+            VK_NUMPAD3, $33:
+              Level2MenuItemClick(Level3MenuItem);
+            VK_NUMPAD4, $34:
+              Level2MenuItemClick(Level4MenuItem);
+            VK_NUMPAD5, $35:
+              Level2MenuItemClick(Level5MenuItem);
+            VK_NUMPAD6, $36:
+              Level2MenuItemClick(Level6MenuItem);
+            VK_NUMPAD7, $37:
+              Level2MenuItemClick(Level7MenuItem);
+            VK_NUMPAD8, $38:
+              ExpandAllMenuItemClick(nil);
+          end;
         Result := True;
         Exit;
       end;
@@ -229,11 +268,11 @@ begin
   Result := True;
 end;
 
-procedure TOutlineFrame.OnEvents(hwnd: HWND; nEvent: NativeInt; lParam: LPARAM);
+procedure TOutlineFrame.OnEvents(hwnd: HWND; nEvent: Cardinal; lParam: LPARAM);
 var
   S: string;
   Info: TCustomBarCloseInfo;
-  APos: TPoint;
+  LPos: TPoint;
 begin
   if (nEvent and EVENT_CREATE_FRAME) <> 0 then
   begin
@@ -304,10 +343,10 @@ begin
   begin
     if FForm <> nil then
     begin
-      Editor_GetCaretPos(hwnd, POS_LOGICAL, @APos);
-      if APos.Y <> FPos then
+      Editor_GetCaretPos(hwnd, POS_LOGICAL, @LPos);
+      if LPos.Y <> FPos then
       begin
-        FPos := APos.Y;
+        FPos := LPos.Y;
         FForm.UpdateTreeSel := True;
       end;
     end;
@@ -321,7 +360,7 @@ begin
   end;
 end;
 
-function TOutlineFrame.PluginProc(hwnd: HWND; nMsg: NativeInt; wParam: WPARAM; lParam: LPARAM): LRESULT;
+function TOutlineFrame.PluginProc(hwnd: HWND; nMsg: Cardinal; wParam: WPARAM; lParam: LPARAM): LRESULT;
 begin
   Result := 0;
   case nMsg of
@@ -337,7 +376,7 @@ end;
 procedure WorkThread(AForm: Pointer);
 var
   Form: TMainForm;
-  Flag: NativeInt;
+  Flag: Integer;
   QueEvent: THandle;
   Mutex: THandle;
 begin
