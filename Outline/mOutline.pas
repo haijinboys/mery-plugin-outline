@@ -20,7 +20,7 @@ uses
 
 resourcestring
   SName = 'アウトライン';
-  SVersion = '2.3.1';
+  SVersion = '2.3.3';
 
 type
   TOutlineFrame = class(TFrame)
@@ -228,7 +228,7 @@ begin
           Id := 0;
           WorkHandle := BeginThread(nil, 0, @WorkThread, @FForm, 0, Id);
           if WorkHandle > 0 then
-            SetThreadPriority(WorkHandle, THREAD_PRIORITY_LOWEST);
+            SetThreadPriority(WorkHandle, THREAD_PRIORITY_BELOW_NORMAL);
         end;
       end;
       if UpdateOutline then

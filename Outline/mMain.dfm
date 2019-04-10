@@ -131,6 +131,32 @@ object MainForm: TMainForm
     object N4: TMenuItem
       Caption = '-'
     end
+    object TextSizeMenuItem: TMenuItem
+      Caption = #25991#23383#12398#12469#12452#12474'(&X)'
+      object TextSizeLargestMenuItem: TMenuItem
+        Caption = #26368#22823'(&G)'
+        OnClick = TextSizeLargestMenuItemClick
+      end
+      object TextSizeLargerMenuItem: TMenuItem
+        Caption = #22823'(&L)'
+        OnClick = TextSizeLargestMenuItemClick
+      end
+      object TextSizeMediumMenuItem: TMenuItem
+        Caption = #20013'(&M)'
+        OnClick = TextSizeLargestMenuItemClick
+      end
+      object TextSizeSmallerMenuItem: TMenuItem
+        Caption = #23567'(&S)'
+        OnClick = TextSizeLargestMenuItemClick
+      end
+      object TextSizeSmallestMenuItem: TMenuItem
+        Caption = #26368#23567'(&A)'
+        OnClick = TextSizeLargestMenuItemClick
+      end
+    end
+    object N5: TMenuItem
+      Caption = '-'
+    end
     object PropPopupMenuItem: TMenuItem
       Caption = #12503#12525#12497#12486#12451'(&P)'
       OnClick = PropPopupMenuItemClick

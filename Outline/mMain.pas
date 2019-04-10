@@ -42,6 +42,8 @@ type
   TDefaultLevel = (dlCollapse, dlLevel2, dlLevel3, dlLevel4, dlLevel5, dlLevel6,
     dlLevel7, dlExpand);
 
+  TTextSize = (tsSmallest, tsSmaller, tsMedium, tsLarger, tsLargest);
+
   TProp = class(TPersistent)
   private
     { Private êÈåæ }
@@ -156,6 +158,13 @@ type
     Level7MenuItem: TMenuItem;
     ExpandAllMenuItem: TMenuItem;
     N4: TMenuItem;
+    TextSizeMenuItem: TMenuItem;
+    N5: TMenuItem;
+    TextSizeLargestMenuItem: TMenuItem;
+    TextSizeLargerMenuItem: TMenuItem;
+    TextSizeMediumMenuItem: TMenuItem;
+    TextSizeSmallerMenuItem: TMenuItem;
+    TextSizeSmallestMenuItem: TMenuItem;
     PropPopupMenuItem: TMenuItem;
     Timer: TTimer;
     TreeView: TTreeView;
@@ -173,6 +182,7 @@ type
     procedure CollapseAllMenuItemClick(Sender: TObject);
     procedure Level2MenuItemClick(Sender: TObject);
     procedure ExpandAllMenuItemClick(Sender: TObject);
+    procedure TextSizeLargestMenuItemClick(Sender: TObject);
     procedure PropPopupMenuItemClick(Sender: TObject);
     procedure TimerTimer(Sender: TObject);
     procedure TreeViewClick(Sender: TObject);
@@ -190,6 +200,7 @@ type
     FBarPos: Integer;
     FFontName: string;
     FFontSize: Integer;
+    FTextSize: TTextSize;
     FProp: TProp;
     FStringBuffer: TStringBuffer;
     FList: TOutlineList;
@@ -551,6 +562,7 @@ begin
   FEditor := ParentWindow;
   FFontName := '';
   FFontSize := 0;
+  FTextSize := tsMedium;
   FProp := TProp.Create;
   FStringBuffer := TStringBuffer.Create(0);
   FList := TOutlineList.Create;
@@ -609,6 +621,23 @@ begin
     MoveDownMenuItem.Enabled := Selected <> nil;
     MoveUpMenuItem.Enabled := Selected <> nil;
   end;
+  TextSizeLargestMenuItem.Checked := False;
+  TextSizeLargerMenuItem.Checked := False;
+  TextSizeMediumMenuItem.Checked := False;
+  TextSizeSmallerMenuItem.Checked := False;
+  TextSizeSmallestMenuItem.Checked := False;
+  case FTextSize of
+    tsLargest:
+      TextSizeLargestMenuItem.Checked := True;
+    tsLarger:
+      TextSizeLargerMenuItem.Checked := True;
+    tsSmaller:
+      TextSizeSmallerMenuItem.Checked := True;
+    tsSmallest:
+      TextSizeSmallestMenuItem.Checked := True;
+  else
+    TextSizeMediumMenuItem.Checked := True;
+  end;
 end;
 
 procedure TMainForm.CopyMenuItemClick(Sender: TObject);
@@ -628,7 +657,7 @@ begin
       LNode := GetFirstNode;
       while LNode <> nil do
       begin
-        LList.Add(LNode.Text);
+        LList.Add(DupeString(#09, LNode.Level) + LNode.Text);
         LNode := LNode.GetNext;
       end;
     end;
@@ -716,6 +745,21 @@ begin
     end;
   end;
   ReleaseMutex(FMutex);
+end;
+
+procedure TMainForm.TextSizeLargestMenuItemClick(Sender: TObject);
+begin
+  if Sender = TextSizeLargestMenuItem then
+    FTextSize := tsLargest
+  else if Sender = TextSizeLargerMenuItem then
+    FTextSize := tsLarger
+  else if Sender = TextSizeSmallerMenuItem then
+    FTextSize := tsSmaller
+  else if Sender = TextSizeSmallestMenuItem then
+    FTextSize := tsSmallest
+  else
+    FTextSize := tsMedium;
+  SetFont;
 end;
 
 procedure TMainForm.PropPopupMenuItemClick(Sender: TObject);
@@ -1394,6 +1438,7 @@ begin
           Assign(Screen.IconFont);
       FFontName := ReadString('Outline', 'FontName', FFontName);
       FFontSize := ReadInteger('Outline', 'FontSize', FFontSize);
+      FTextSize := TTextSize(ReadInteger('Outline', 'TextSize', Integer(FTextSize)));
     finally
       Free;
     end;
@@ -1413,6 +1458,7 @@ begin
     with TMemIniFile.Create(S, TEncoding.UTF8) do
       try
         WriteInteger('Outline', 'CustomBarPos', FBarPos);
+        WriteInteger('Outline', 'TextSize', Integer(FTextSize));
         UpdateFile;
       finally
         Free;
@@ -1754,6 +1800,16 @@ begin
       Name := IfThen(FFontName <> '', FFontName, LName);
       Size := IfThen(FFontSize <> 0, FFontSize, LSize);
       Height := MulDiv(Height, Self.PixelsPerInch, 96);
+      case FTextSize of
+        tsLargest:
+          Size := Round(Size * 1.5);
+        tsLarger:
+          Size := Round(Size * 1.25);
+        tsSmaller:
+          Size := Round(Size * 0.75);
+        tsSmallest:
+          Size := Round(Size * 0.5);
+      end;
       Color := LFore;
     end;
     Color := LBack;
@@ -1783,6 +1839,7 @@ begin
       if LNode <> nil then
         LNode.Text := FList[I].LineStr;
     end;
+  UpdateTreeViewSel;
 end;
 
 function TMainForm.SetProperties: Boolean;
